@@ -12,7 +12,7 @@ Le script `run.js` peut-être executé par un cron une fois les variables d'envi
 module.exports = {
   csvPath: 'urlducsvPictoAccess',
   secretKey: 'cléSecretedUnCompteOAAdministateurDesAgendas',
-  forceUpdate: true
+  forceUpdate: false
 };
 ```
 
