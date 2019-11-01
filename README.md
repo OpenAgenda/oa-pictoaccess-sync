@@ -16,7 +16,11 @@ module.exports = {
 };
 ```
 
+Installation: `yarn`
+
 Lancer `yarn dev` pour executer le script avec la configuration de développement.
+
+Lancer les tests: `yarn test`
 
 # Log
 
