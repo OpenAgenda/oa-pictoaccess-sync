@@ -1,8 +1,10 @@
 {
   "name": "oa-pictoaccess-sync",
   "version": "1.0.0",
-  "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "dev": "node dev"
+  },
   "dependencies": {
     "fast-csv": "^3.4.0",
     "fast-levenshtein": "^2.0.6",
