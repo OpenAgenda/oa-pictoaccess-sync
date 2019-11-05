@@ -7,6 +7,7 @@ const sa = require('superagent');
 // local imports
 const SDK = require('./lib/SDK');
 const csv = require('./lib/loadCSVData');
+const Out = require('./lib/Output');
 const listOALocations = require('./lib/listOALocations');
 
 const config = Object.assign({
@@ -18,17 +19,19 @@ const config = Object.assign({
     percentSimilarThreshold: 70 // Percentage form which we consider that 2 names are similar enough
   },
   forceUpdate: false,
+  outputDir: '/var/tmp/'
 }, JSON.parse(process.env.APP_CONFIG));
 
 const locationIsSame = require('./lib/locationIsSame').bind(null, config.locationCompare);
 
 (async () => {
 
-  console.log(`\nStarting Sync`)
-  console.log(`Parsing CSV file at: ${config.csvUrl}`)
+  console.log(`\nStarting Sync`);
+  console.log(`Parsing CSV file at: ${config.csvUrl}`);
 
   const res = await sa.get(config.csvUrl);
   const entries = await csv(res.text);
+  const output = Out(config.outputDir);
 
   console.log(`Parsed CSV has ${entries.length} entries`)
 
@@ -59,20 +62,17 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
         )));
 
         if (!matchingEntry) {
-          console.log('No matches found in CSV. Skipping to next location');
+          output(agenda, location, 'noMatch');
           continue;
         };
 
         matchedCount++;
-        console.log(`Matched location: ${location.name} == ${matchingEntry.page}`);
 
-        if (!config.forceUpdate && location.extId) {
-          console.log('Attribute extId already set. Skipping to next location');
-          continue;
-        }
-
-        if (config.forceUpdate) {
-          console.log('Forcing update')
+        if (location.extId) {
+          output(agenda, location, 'oldMatch');
+          if (!config.forceUpdate) continue;
+        } else {
+          output(agenda, location, 'newMatch', matchingEntry.uid);
         }
 
         let newLinks = location.links.indexOf(matchingEntry.widget_link) == -1 ? [...location.links, matchingEntry.widget_link] : location.links;
@@ -87,15 +87,16 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
         });
 
         updatedCount++;
+
       }
 
-      console.log(`\nSync completed`)
+      console.log(`\nSync completed, generating file at %s`, await output.generateCSV());
       console.log(`${matchedCount} total matched locations for agenda: ${agenda.slug} (${agenda.uid})`);
       console.log(`${updatedCount} updated locations for agenda: ${agenda.slug} (${agenda.uid})`);
-
     }
 
   } catch (e) {
+    console.log('something went wrong');
     console.log(e);
   }
 
