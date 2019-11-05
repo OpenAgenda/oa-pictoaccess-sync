@@ -24,6 +24,10 @@ Lancer les tests: `yarn test`
 
 # Log
 
+05/11/2019
+
+ * Ajout de `Output.js` genère un csv de sortie listant toutes les évaluations faites
+
 01/11/2019
 
  * Un fichier gitignoré contient une config de développement: `config.dev.js`. Il contient les informations sensibles, c'est à dire les clés du compte utilisé pour mettre à jour les lieux sur OpenAgenda et le chemin vers le fichier CSV source des lieux pictoaccess
