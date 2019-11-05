@@ -28,3 +28,4 @@ Lancer les tests: `yarn test`
 
  * Un fichier gitignoré contient une config de développement: `config.dev.js`. Il contient les informations sensibles, c'est à dire les clés du compte utilisé pour mettre à jour les lieux sur OpenAgenda et le chemin vers le fichier CSV source des lieux pictoaccess
  * Précisé une version de node. la dépendence geolib est [incompatible](https://github.com/manuelbieh/geolib/issues/208) avec node v12.11.0
+ * Ajout de tests pour la notion de distance entre 2 lieux
