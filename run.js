@@ -54,46 +54,51 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
 
       for (let location of OALocations) {
 
-        console.log(`\nProcessing ${location.name}`)
+        console.log(`\nProcessing ${location.name}`);
 
-        const matchingEntry = _.first(entries.filter(entry => locationIsSame(
-          { name: entry.page, latitude: entry.latitude, longitude: entry.longitude },
-          { name: location.name, latitude: location.latitude, longitude: location.longitude }
-        )));
+        try {
+          const matchingEntry = _.first(entries.filter(entry => locationIsSame(
+            { name: entry.page, latitude: entry.latitude, longitude: entry.longitude },
+            { name: location.name, latitude: location.latitude, longitude: location.longitude }
+          )));
 
-        if (!matchingEntry) {
-          output(agenda, location, 'noMatch');
-          continue;
-        };
+          if (!matchingEntry) {
+            output(agenda, location, 'noMatch');
+            continue;
+          };
 
-        matchedCount++;
+          matchedCount++;
 
-        if (location.extId) {
-          output(agenda, location, 'oldMatch');
-          if (!config.forceUpdate) continue;
-        } else {
-          output(agenda, location, 'newMatch', matchingEntry.uid);
+          if (location.extId) {
+            output(agenda, location, 'oldMatch');
+            if (!config.forceUpdate) continue;
+          } else {
+            output(agenda, location, 'newMatch', matchingEntry.uid);
+          }
+
+          let newLinks = location.links.indexOf(matchingEntry.widget_link) == -1 ? [...location.links, matchingEntry.widget_link] : location.links;
+
+          console.log(`Sending post request to /locations/${location.uid}`);
+          const res = await client.v1('post', `/locations/${location.uid}`, {
+            data: {
+              agenda_uid: agenda.uid,
+              extId: matchingEntry.uid,
+              links: newLinks
+            }
+          });
+
+          updatedCount++;
+        } catch (e) {
+          console.log('failed to update location');
+          console.log(e);
         }
 
-        let newLinks = location.links.indexOf(matchingEntry.widget_link) == -1 ? [...location.links, matchingEntry.widget_link] : location.links;
-
-        console.log(`Sending post request to /locations/${location.uid}`);
-        const res = await client.v1('post', `/locations/${location.uid}`, {
-          data: {
-            agenda_uid: agenda.uid,
-            extId: matchingEntry.uid,
-            links: newLinks
-          }
-        });
-
-        updatedCount++;
-
       }
-
-      console.log(`\nSync completed, generating file at %s`, await output.generateCSV());
       console.log(`${matchedCount} total matched locations for agenda: ${agenda.slug} (${agenda.uid})`);
       console.log(`${updatedCount} updated locations for agenda: ${agenda.slug} (${agenda.uid})`);
     }
+
+    console.log(`\nSync completed, generating file at %s`, await output.generateCSV());
 
   } catch (e) {
     console.log('something went wrong');
