@@ -10,50 +10,50 @@ const csv = require('./lib/loadCSVData');
 const Out = require('./lib/Output');
 const listOALocations = require('./lib/listOALocations');
 
-const config = Object.assign({
-  csvUrl: null, // required
-  oa: { public: null, secret: null },
-  targetAgendas: [],
-  locationCompare: {
-    geoDistanceThreshold: 100, // Distance from which consider that 2 locations are close enough
-    percentSimilarThreshold: 70 // Percentage form which we consider that 2 names are similar enough
+const config = {
+  ...{
+    csvUrl: null, // required
+    oa: { public: null, secret: null },
+    targetAgendas: [],
+    locationCompare: {
+      geoDistanceThreshold: 100, // Distance from which consider that 2 locations are close enough
+      percentSimilarThreshold: 70 // Percentage form which we consider that 2 names are similar enough
+    },
+    forceUpdate: false,
+    outputDir: '/var/tmp/'
   },
-  forceUpdate: false,
-  outputDir: '/var/tmp/'
-}, JSON.parse(process.env.APP_CONFIG));
+  ...JSON.parse(process.env.APP_CONFIG)
+};
 
 const locationIsSame = require('./lib/locationIsSame').bind(null, config.locationCompare);
 
 (async () => {
-
-  console.log(`\nStarting Sync`);
+  console.log('\nStarting Sync');
   console.log(`Parsing CSV file at: ${config.csvUrl}`);
 
   const res = await sa.get(config.csvUrl);
+
   const entries = await csv(res.text);
   const output = Out(config.outputDir);
 
-  console.log(`Parsed CSV has ${entries.length} entries`)
+  console.log(`Parsed CSV has ${entries.length} entries`);
 
   try {
-
     const client = await SDK(_.pick(config.oa, ['secret']));
 
     // Loop over all agendas
 
     for (const agenda of config.targetAgendas) {
-
       let matchedCount = 0;
       let updatedCount = 0;
 
       // Get all locations for an agenda
-      console.log(`Fetching all locations for agenda: ${agenda.slug} (${agenda.uid})`)
+      console.log(`Fetching all locations for agenda: ${agenda.slug} (${agenda.uid})`);
       const OALocations = await listOALocations(agenda.uid);
 
       console.log(`Fetched ${OALocations.length} locations`);
 
-      for (let location of OALocations) {
-
+      for (const location of OALocations) {
         console.log(`\nProcessing ${location.name}`);
 
         try {
@@ -65,9 +65,9 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
           if (!matchingEntry) {
             output(agenda, location, 'noMatch');
             continue;
-          };
+          }
 
-          matchedCount++;
+          matchedCount += 1;
 
           if (location.extId) {
             output(agenda, location, 'oldMatch');
@@ -76,10 +76,10 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
             output(agenda, location, 'newMatch', matchingEntry.uid);
           }
 
-          let newLinks = location.links.indexOf(matchingEntry.widget_link) == -1 ? [...location.links, matchingEntry.widget_link] : location.links;
+          const newLinks = location.links.indexOf(matchingEntry.widget_link) === -1 ? [...location.links, matchingEntry.widget_link] : location.links;
 
           console.log(`Sending post request to /locations/${location.uid}`);
-          const res = await client.v1('post', `/locations/${location.uid}`, {
+          const res = await client.v2('post', `/locations/${location.uid}`, {
             data: {
               agenda_uid: agenda.uid,
               extId: matchingEntry.uid,
@@ -87,19 +87,16 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
             }
           });
 
-          updatedCount++;
+          updatedCount += 1;
         } catch (e) {
           console.log('failed to update location');
           console.log(e);
         }
-
       }
       console.log(`${matchedCount} total matched locations for agenda: ${agenda.slug} (${agenda.uid})`);
       console.log(`${updatedCount} updated locations for agenda: ${agenda.slug} (${agenda.uid})`);
     }
-
-    console.log(`\nSync completed, generating file at %s`, await output.generateCSV());
-
+    console.log('\nSync completed, generating file at %s', await output.generateCSV());
   } catch (e) {
     console.log('something went wrong');
     console.log(e);

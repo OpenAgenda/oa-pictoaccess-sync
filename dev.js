@@ -3,7 +3,7 @@
 const config = require('./config.dev');
 
 process.env.APP_CONFIG = JSON.stringify({
-  csvUrl: config.csvPath,
+  csvUrl: config.csvUrl,
   locationCompare: {
     geoDistanceThreshold: 100, // Distance from which consider that 2 locations are close enough
     percentSimilarThreshold: 70 // Percentage form which we consider that 2 names are similar enough
@@ -13,7 +13,7 @@ process.env.APP_CONFIG = JSON.stringify({
     secret: config.secretKey
   },
   targetAgendas: [
-    { "slug": "test-synchro-pictoaccess", "uid": "59503740", "title": "Test Synchro PictoAccess" }
+    { uid: '79882300', slug: 'morbihan-test', title: 'Morbihan test' }
   ]
 });
 
