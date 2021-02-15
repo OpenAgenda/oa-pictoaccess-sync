@@ -1,7 +1,8 @@
 node_modules
 config.dev.js
 yarn-error.log
-yarn.lock
+yarn.lockS
 prod.js
 .eslintrc
 pictoaccess.code-workspace
+old-SDK.js

@@ -39,8 +39,6 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
   console.log(`Parsed CSV has ${entries.length} entries`);
 
   try {
-    const client = await SDK(_.pick(config.oa, ['secret']));
-
     // Loop over all agendas
 
     for (const agenda of config.targetAgendas) {
@@ -50,6 +48,10 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
       // Get all locations for an agenda
       console.log(`Fetching all locations for agenda: ${agenda.slug} (${agenda.uid})`);
       const OALocations = await listOALocations(agenda.uid);
+      const SdkLocations = await SDK({
+        key: config.oa.public,
+        secret: config.oa.secret
+      }).then(oa => oa.agendas(agenda.uid).locations);
 
       console.log(`Fetched ${OALocations.length} locations`);
 
@@ -79,12 +81,9 @@ const locationIsSame = require('./lib/locationIsSame').bind(null, config.locatio
           const newLinks = location.links.indexOf(matchingEntry.widget_link) === -1 ? [...location.links, matchingEntry.widget_link] : location.links;
 
           console.log(`Sending post request to /locations/${location.uid}`);
-          const res = await client.v2('post', `/locations/${location.uid}`, {
-            data: {
-              agenda_uid: agenda.uid,
-              extId: matchingEntry.uid,
-              links: newLinks
-            }
+          const res = await SdkLocations.update({ uid: location.uid }, {
+            extId: matchingEntry.uid,
+            links: newLinks
           });
 
           updatedCount += 1;
