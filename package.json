@@ -12,7 +12,7 @@
     "axios": "^0.21.1",
     "fast-csv": "^3.4.0",
     "fast-levenshtein": "^2.0.6",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "superagent": "^5.1.0"
   },
   "devDependencies": {
